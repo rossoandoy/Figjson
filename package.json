@@ -1,0 +1,17 @@
+{
+  "name": "figma-to-edocument-converter",
+  "version": "1.0.0",
+  "description": "Figma JSONをeDocument形式に変換するツール",
+  "main": "figma-to-edocument-converter.js",
+  "scripts": {
+    "convert": "node figma-to-edocument-converter.js",
+    "test": "node test-converter.js"
+  },
+  "keywords": ["figma", "edocument", "converter", "json"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

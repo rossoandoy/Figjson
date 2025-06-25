@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figma to eDocument Converter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 Figma to eDocument Converter</h1>
+            <p>FigmaのJSONファイルをeDocument形式に変換します</p>
+        </header>
+
+        <main>
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">📁</div>
+                        <h3>Figma JSONファイルを選択</h3>
+                        <p>ファイルをドラッグ&ドロップするか、クリックして選択してください</p>
+                        <input type="file" id="fileInput" accept=".json" hidden>
+                        <button class="upload-btn" id="uploadBtn">ファイルを選択</button>
+                    </div>
+                </div>
+                
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="file-details">
+                        <div class="file-icon">📄</div>
+                        <div class="file-text">
+                            <h4 id="fileName">ファイル名</h4>
+                            <p id="fileSize">ファイルサイズ</p>
+                        </div>
+                        <button class="remove-btn" id="removeBtn">×</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="setting-group">
+                    <label for="paperTypeSelect">出力用紙サイズ:</label>
+                    <select id="paperTypeSelect">
+                        <option value="A4">A4 (210×297mm)</option>
+                        <option value="A3">A3 (297×420mm)</option>
+                        <option value="B4">B4 (257×364mm)</option>
+                        <option value="B5">B5 (182×257mm)</option>
+                        <option value="Letter">Letter (216×279mm)</option>
+                        <option value="Legal">Legal (216×356mm)</option>
+                    </select>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="scaleFactorInput">スケール調整:</label>
+                    <input type="range" id="scaleFactorInput" min="0.1" max="3.0" step="0.1" value="1.0">
+                    <span id="scaleFactorValue">1.0</span>
+                </div>
+            </div>
+
+            <div class="action-section">
+                <button class="convert-btn" id="convertBtn" disabled>
+                    <span class="btn-text">変換開始</span>
+                    <span class="btn-loader" style="display: none;">🔄</span>
+                </button>
+                
+                <div class="progress-bar" id="progressBar" style="display: none;">
+                    <div class="progress-fill"></div>
+                </div>
+                
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+
+            <div class="result-section" id="resultSection" style="display: none;">
+                <div class="result-info">
+                    <h3>✅ 変換完了</h3>
+                    <div class="conversion-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">変換された要素数:</span>
+                            <span class="stat-value" id="elementCount">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">用紙サイズ:</span>
+                            <span class="stat-value" id="paperSize">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">処理時間:</span>
+                            <span class="stat-value" id="processingTime">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Figmaサイズ:</span>
+                            <span class="stat-value" id="figmaSize">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mapping-section">
+                        <button class="mapping-btn" id="mappingBtn">
+                            🗺️ マッピング表を表示
+                        </button>
+                        <div class="mapping-table" id="mappingTable" style="display: none;">
+                            <h4>Figma ↔ eDocument 要素マッピング</h4>
+                            <div class="mapping-content" id="mappingContent">
+                                <!-- マッピング内容がここに表示される -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-actions">
+                        <button class="preview-btn" id="previewBtn">
+                            👁️ プレビュー表示
+                        </button>
+                        <button class="download-btn" id="downloadBtn">
+                            📥 eDocumentファイルをダウンロード
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="preview-section" id="previewSection" style="display: none;">
+                    <h3>📋 変換結果プレビュー</h3>
+                    <div class="preview-container">
+                        <div class="preview-paper" id="previewPaper">
+                            <!-- プレビュー内容がここに表示される -->
+                        </div>
+                    </div>
+                    <div class="preview-info">
+                        <p>✅ プレビューで配置を確認してからeDocumentにインポートしてください</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="info-section">
+                <h4>使用方法</h4>
+                <ol>
+                    <li>Figma Rawプラグインで出力したJSONファイルを選択</li>
+                    <li>「変換開始」ボタンをクリック</li>
+                    <li>変換完了後、「ダウンロード」ボタンでファイルを保存</li>
+                    <li>eDocumentにインポートして使用</li>
+                </ol>
+                
+                <div class="notes">
+                    <h4>注意事項</h4>
+                    <ul>
+                        <li>データバインディングは手動で設定が必要です</li>
+                        <li>動的テーブルは手動調整が必要です</li>
+                        <li>フォントの互換性を確認してください</li>
+                    </ul>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="converter-browser.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
