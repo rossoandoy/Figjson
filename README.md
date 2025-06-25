@@ -2,16 +2,35 @@
 
 FigmaからエクスポートしたJSONファイルを、Salesforce eDocumentにインポート可能な形式に変換するツールです。
 
-## 機能
+## 🚀 オンライン版を使用
 
-- Figma Raw プラグインで出力されたJSONファイルを解析
-- eDocument形式のJSONに変換
-- テキスト要素の座標、サイズ、フォント情報を変換
-- 画像・図形要素の基本情報を変換
+**GitHub Pages でWebアプリケーションを公開中！**
 
-## 使用方法
+**👉 [Figma to eDocument Converter を使う](https://rossoandoy.github.io/Figjson/)**
 
-### 1. 基本的な変換
+ブラウザ上で直接変換でき、プレビュー機能付きの使いやすいインターフェースを提供しています。
+
+## ✨ 主な機能
+
+- 🎯 **Figma Raw プラグイン**のJSONファイルを完全対応
+- 📄 **用紙サイズ・向き選択**（A4縦横、A3、B4、B5、Letter、Legal）
+- 🔍 **リアルタイムプレビュー**で変換結果を事前確認
+- 🗺️ **要素マッピング表**でFigma→eDocument変換詳細を表示
+- 🤖 **pathベース変換**で高精度な要素配置
+- 🛡️ **スマート要素フィルタリング**で不要な要素を自動除外
+
+## 📖 使用方法
+
+### 🌐 Webアプリ（推奨）
+
+1. **[GitHub Pages版](https://rossoandoy.github.io/Figjson/)** にアクセス
+2. Figma RawプラグインでエクスポートしたJSONファイルをアップロード
+3. 用紙サイズと向きを選択
+4. 「変換開始」をクリック
+5. プレビューで結果を確認
+6. 「ダウンロード」でeDocument JSONを取得
+
+### 💻 コマンドライン版
 
 ```bash
 node figma-to-edocument-converter.js <入力ファイル> <出力ファイル>
@@ -19,19 +38,20 @@ node figma-to-edocument-converter.js <入力ファイル> <出力ファイル>
 
 例:
 ```bash
-node figma-to-edocument-converter.js "Figma design.json" "edocument-output.json"
+node figma-to-edocument-converter.js "figma-design.json" "edocument-output.json"
 ```
 
-### 2. npmスクリプトを使用
+### 🔧 開発者向け
 
 ```bash
-npm run convert -- "Figma design.json" "edocument-output.json"
-```
+# 依存関係インストール
+npm install
 
-### 3. テスト実行
-
-```bash
+# テスト実行
 npm test
+
+# npmスクリプト使用
+npm run convert -- "input.json" "output.json"
 ```
 
 ## ファイル構成
@@ -62,32 +82,32 @@ npm test
 - 背景色
 - 基本的な図形情報
 
-### 新機能（v2.0）
+## 🆕 v3.0の新機能
+
+### 📐 用紙の向き対応
+- **縦向き（Portrait）** と **横向き（Landscape）** の選択
+- 全用紙サイズで向き選択可能（A4, A3, B4, B5, Letter, Legal）
+- 動的サイズ表示でリアルタイム確認
+
+### 🤖 pathベース変換システム
+- Figma Rawプラグインの`textContent`配列を自動検出
+- 階層パス文字列による高精度な要素マッピング
+- フォールバック機能で従来の変換方式もサポート
+
+### 🛡️ セキュリティ強化
+- 機密情報を含むサンプルファイルの除外
+- 汎用的なパターンマッチングでハードコーディング回避
+- 一般公開対応のセキュリティ設計
 
 ### 🎯 改善された座標変換
 - 親子関係を考慮した絶対座標計算
 - より正確なピクセル→mm変換
 - 用紙サイズに応じた適切なスケーリング
 
-### 📐 用紙サイズ・スケール設定
-- A4, A3, B4, B5, Letter, Legal対応
-- ユーザー指定スケールファクター（0.1〜3.0倍）
-- リアルタイムプレビュー機能
-
-### 🖼️ 画像要素対応
-- Figma画像要素の自動検出
-- eDocument `type: "image"` 形式での出力
-- 画像URLは手動設定が必要（セキュリティ上の理由）
-
-### 👁️ プレビュー機能
+### 👁️ 高度なプレビュー機能
 - 変換結果の視覚的確認
-- 要素の位置・サイズ表示
-- eDocumentインポート前の事前チェック
-
-### 🤖 自動テスト対応
-- Playwright MCPによるeDocument自動テスト
-- Salesforce環境での実際の動作確認
-- スクリーンショット自動撮影
+- 要素マッピング表で詳細情報表示
+- 衝突検出とレイアウト最適化
 
 ## 制限事項
 
