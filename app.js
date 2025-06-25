@@ -20,6 +20,7 @@ class FigmaConverterApp {
         this.fileSize = document.getElementById('fileSize');
         this.removeBtn = document.getElementById('removeBtn');
         this.paperTypeSelect = document.getElementById('paperTypeSelect');
+        this.orientationSelect = document.getElementById('orientationSelect');
         this.scaleFactorInput = document.getElementById('scaleFactorInput');
         this.scaleFactorValue = document.getElementById('scaleFactorValue');
         this.convertBtn = document.getElementById('convertBtn');
@@ -55,6 +56,13 @@ class FigmaConverterApp {
         this.scaleFactorInput.addEventListener('input', (e) => {
             this.scaleFactorValue.textContent = e.target.value;
         });
+        
+        // 用紙設定の変更時に表示を更新
+        this.paperTypeSelect.addEventListener('change', () => this.updatePaperSizeDisplay());
+        this.orientationSelect.addEventListener('change', () => this.updatePaperSizeDisplay());
+        
+        // 初期表示を設定
+        this.updatePaperSizeDisplay();
 
         // 変換・ダウンロード・プレビュー
         this.convertBtn.addEventListener('click', () => this.convertFile());
@@ -155,10 +163,11 @@ class FigmaConverterApp {
 
             // 設定値を取得
             const paperType = this.paperTypeSelect.value;
+            const orientation = this.orientationSelect.value;
             const scaleFactor = parseFloat(this.scaleFactorInput.value);
 
             // 変換実行
-            this.convertedData = this.converter.convertFigmaToEDocument(figmaData, paperType, scaleFactor);
+            this.convertedData = this.converter.convertFigmaToEDocument(figmaData, paperType, orientation, scaleFactor);
             
             this.showStatus('変換完了！', 'success');
             await this.sleep(500);
@@ -455,6 +464,20 @@ class FigmaConverterApp {
 
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    updatePaperSizeDisplay() {
+        const paperType = this.paperTypeSelect.value;
+        const orientation = this.orientationSelect.value;
+        
+        // コンバーターから用紙サイズ情報を取得
+        const paperSize = this.converter.paperSizes[paperType][orientation];
+        
+        // 用紙タイプの選択肢のテキストを更新
+        const selectedOption = this.paperTypeSelect.querySelector(`option[value="${paperType}"]`);
+        if (selectedOption && paperSize) {
+            selectedOption.textContent = `${paperType} (${paperSize.width}×${paperSize.height}mm)`;
+        }
     }
 }
 

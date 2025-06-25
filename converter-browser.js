@@ -3,17 +3,35 @@ class FigmaToEDocumentConverter {
     constructor() {
         this.pointToMm = 0.352778; // 1 point = 0.352778 mm
         this.paperSizes = {
-            'A4': { width: 297, height: 210 },
-            'A3': { width: 420, height: 297 },
-            'B4': { width: 364, height: 257 },
-            'B5': { width: 257, height: 182 },
-            'Letter': { width: 279, height: 216 },
-            'Legal': { width: 356, height: 216 }
+            'A4': { 
+                portrait: { width: 210, height: 297 },
+                landscape: { width: 297, height: 210 }
+            },
+            'A3': { 
+                portrait: { width: 297, height: 420 },
+                landscape: { width: 420, height: 297 }
+            },
+            'B4': { 
+                portrait: { width: 257, height: 364 },
+                landscape: { width: 364, height: 257 }
+            },
+            'B5': { 
+                portrait: { width: 182, height: 257 },
+                landscape: { width: 257, height: 182 }
+            },
+            'Letter': { 
+                portrait: { width: 216, height: 279 },
+                landscape: { width: 279, height: 216 }
+            },
+            'Legal': { 
+                portrait: { width: 216, height: 356 },
+                landscape: { width: 356, height: 216 }
+            }
         };
     }
 
-    convertFigmaToEDocument(figmaData, paperType = 'A4', scaleFactor = 1.0) {
-        const paperSize = this.paperSizes[paperType];
+    convertFigmaToEDocument(figmaData, paperType = 'A4', orientation = 'portrait', scaleFactor = 1.0) {
+        const paperSize = this.paperSizes[paperType][orientation];
         
         const eDocumentData = {
             panels: [{
@@ -134,9 +152,9 @@ class FigmaToEDocumentConverter {
     }
 
     findNodeByPath(targetPath, nodeMap) {
-        // pathの形式: "Figma design - スクリーンショット.../Root/Groups/説明担当者"
+        // pathの形式: "Figma design - [ファイル名].../Root/Groups/[要素名]"
         // ルートファイル名部分を除去して正規化
-        const normalizedPath = targetPath.split('/').slice(1).join('/'); // "Root/Groups/説明担当者"
+        const normalizedPath = targetPath.split('/').slice(1).join('/'); // "Root/Groups/[要素名]"
         
         // 完全一致を試行
         if (nodeMap.has(normalizedPath)) {
@@ -168,74 +186,55 @@ class FigmaToEDocumentConverter {
         // ドキュメント構造に基づく詳細配置
         
         // === ヘッダーエリア ===
-        if (elementName.includes('説明担当者') || elementName.includes('TOMAS') || elementName.includes('トーマス')) {
+        if (elementName.includes('担当者') || elementName.match(/^[A-Z]{2,}/) || this.isHeaderElement(elementName)) {
             x = 200; y = 15; // 右上ヘッダー
         }
         
         // === メインタイトル ===
-        else if (elementName.includes('指導料について') || elementName.includes('事前説明書')) {
+        else if (this.isTitleElement(elementName)) {
             x = 50; y = 50; // センター寄りタイトル
-        } else if (elementName.includes('特定商取引法')) {
+        } else if (this.isSubtitleElement(elementName)) {
             x = 50; y = 75; // サブタイトル
         }
         
         // === 契約者情報ブロック ===
-        else if (elementName.includes('ご契約者')) {
+        else if (this.isContractorElement(elementName)) {
             x = 40; y = 100; // 左側ラベル
-        } else if (elementName.includes('年') && elementName.includes('月') && elementName.includes('日')) {
+        } else if (this.isDateElement(elementName)) {
             x = 120; y = 100; // 日付入力欄
         }
         
-        // === 生徒情報テーブルヘッダー ===
-        else if (elementName.includes('生徒カナ')) {
-            x = 40; y = 140; // テーブル左上
-        } else if (elementName.includes('生徒名')) {
-            x = 40; y = 170; // 生徒名行
-        } else if (elementName.includes('学年')) {
-            x = 200; y = 170; // 学年カラム
+        // === 個人情報テーブルヘッダー ===
+        else if (this.isPersonalInfoElement(elementName)) {
+            const infoIndex = this.getPersonalInfoIndex(elementName);
+            x = 40 + (infoIndex > 0 ? 160 : 0); 
+            y = 140 + (infoIndex * 30); // テーブル行
         }
         
         // === セクションヘッダー ===
-        else if (elementName.includes('新規契約') && elementName.includes('追加契約')) {
+        else if (this.isSectionHeaderElement(elementName)) {
             x = 40; y = 210; // セクションタイトル
-        } else if (elementName.includes('新規契約及び追加契約の場合')) {
+        } else if (this.isSectionDescriptionElement(elementName)) {
             x = 150; y = 210; // 説明文
         }
         
-        // === 受講内容セクション ===
-        else if (elementName.includes('受講内容')) {
+        // === コンテンツセクション ===
+        else if (this.isContentSectionElement(elementName)) {
             x = 40; y = 240; // セクションタイトル
         }
         
-        // === 費用セクション ===
-        else if (elementName.includes('費用')) {
+        // === 費用・金額セクション ===
+        else if (this.isCostElement(elementName)) {
             x = 40; y = 350; // 費用セクション
         }
         
         // === 右側説明エリア (Groups要素) ===
-        else if (pathSegments.includes('Groups')) {
+        else if (pathSegments.includes('Groups') || this.isRightPanelElement(elementName)) {
             // 右側説明パネルの配置
             x = 300; // 右側開始位置
             
-            if (elementName.includes('クーリング・オフ')) {
-                y = 120;
-            } else if (elementName.includes('中途解除')) {
-                y = 160;
-            } else if (elementName.includes('支払方法') || elementName.includes('お支払い方法')) {
-                y = 200;
-            } else if (elementName.includes('変更契約')) {
-                y = 240;
-            } else if (elementName.includes('その他')) {
-                y = 280;
-            } else if (elementName.includes('第1回目') || elementName.includes('第2回目')) {
-                y = 320;
-            } else if (elementName.includes('振替') || elementName.includes('内訳')) {
-                y = 360;
-            } else {
-                // その他のGroups要素は順次配置
-                const groupIndex = this.simpleHash(elementName) % 15;
-                y = 120 + (groupIndex * 20);
-            }
+            const rightPanelY = this.calculateRightPanelY(elementName);
+            y = rightPanelY;
         }
         
         // === テキストタイプ別処理 ===
@@ -264,6 +263,124 @@ class FigmaToEDocumentConverter {
         console.log(`📍 最終座標: (${x}, ${y})`);
         
         return { x, y };
+    }
+
+    isHeaderElement(elementName) {
+        // ヘッダー要素の汎用的な判定
+        const headerPatterns = [
+            /会社/, /企業/, /法人/, /組織/, /団体/,
+            /担当/, /責任/, /連絡/, /窓口/,
+            /logo/i, /header/i, /top/i
+        ];
+        return headerPatterns.some(pattern => pattern.test(elementName));
+    }
+
+    isTitleElement(elementName) {
+        // タイトル要素の汎用的な判定
+        const titlePatterns = [
+            /について/, /書/, /表/, /票/, /証/, /書面/,
+            /title/i, /heading/i, /main/i
+        ];
+        return titlePatterns.some(pattern => pattern.test(elementName));
+    }
+
+    isSubtitleElement(elementName) {
+        // サブタイトル要素の汎用的な判定
+        const subtitlePatterns = [
+            /法/, /規約/, /条項/, /概要/, /説明/,
+            /subtitle/i, /sub/i, /description/i
+        ];
+        return subtitlePatterns.some(pattern => pattern.test(elementName));
+    }
+
+    isContractorElement(elementName) {
+        // 契約者・顧客情報要素の判定
+        const contractorPatterns = [
+            /契約者/, /顧客/, /お客/, /申込/, /依頼者/,
+            /customer/i, /client/i, /contractor/i
+        ];
+        return contractorPatterns.some(pattern => pattern.test(elementName));
+    }
+
+    isDateElement(elementName) {
+        // 日付要素の判定
+        const datePatterns = [
+            /年.*月.*日/, /日付/, /年月日/, /date/i, /時刻/, /time/i
+        ];
+        return datePatterns.some(pattern => pattern.test(elementName));
+    }
+
+    isPersonalInfoElement(elementName) {
+        // 個人情報要素の判定
+        const personalPatterns = [
+            /名前/, /氏名/, /カナ/, /学年/, /年齢/, /住所/, /電話/,
+            /name/i, /age/i, /address/i, /phone/i
+        ];
+        return personalPatterns.some(pattern => pattern.test(elementName));
+    }
+
+    getPersonalInfoIndex(elementName) {
+        // 個人情報要素のインデックスを取得（テーブル配置用）
+        if (elementName.includes('カナ') || elementName.includes('kana')) return 0;
+        if (elementName.includes('名前') || elementName.includes('氏名') || elementName.includes('name')) return 1;
+        if (elementName.includes('学年') || elementName.includes('年齢') || elementName.includes('age')) return 2;
+        return 0;
+    }
+
+    isSectionHeaderElement(elementName) {
+        // セクションヘッダー要素の判定
+        const sectionPatterns = [
+            /契約/, /追加/, /変更/, /新規/, /更新/,
+            /section/i, /header/i, /title/i
+        ];
+        return sectionPatterns.some(pattern => pattern.test(elementName));
+    }
+
+    isSectionDescriptionElement(elementName) {
+        // セクション説明要素の判定
+        return elementName.includes('場合') || elementName.includes('について') || 
+               elementName.includes('説明') || /description/i.test(elementName);
+    }
+
+    isContentSectionElement(elementName) {
+        // コンテンツセクション要素の判定
+        const contentPatterns = [
+            /内容/, /詳細/, /項目/, /リスト/, /一覧/,
+            /content/i, /detail/i, /item/i, /list/i
+        ];
+        return contentPatterns.some(pattern => pattern.test(elementName));
+    }
+
+    isCostElement(elementName) {
+        // 費用・金額要素の判定
+        const costPatterns = [
+            /費用/, /料金/, /金額/, /価格/, /代金/, /請求/,
+            /cost/i, /price/i, /fee/i, /amount/i, /bill/i
+        ];
+        return costPatterns.some(pattern => pattern.test(elementName));
+    }
+
+    isRightPanelElement(elementName) {
+        // 右側パネル要素の判定
+        const rightPanelPatterns = [
+            /解除/, /変更/, /支払/, /方法/, /オフ/, /その他/, /回目/, /振替/, /内訳/,
+            /cancellation/i, /payment/i, /method/i, /change/i, /other/i
+        ];
+        return rightPanelPatterns.some(pattern => pattern.test(elementName));
+    }
+
+    calculateRightPanelY(elementName) {
+        // 右側パネル要素の縦位置を計算
+        if (elementName.includes('解除') || elementName.includes('cancel')) return 120;
+        if (elementName.includes('支払') || elementName.includes('payment')) return 160;
+        if (elementName.includes('変更') || elementName.includes('change')) return 200;
+        if (elementName.includes('その他') || elementName.includes('other')) return 240;
+        if (elementName.includes('回目') || elementName.includes('回数')) return 280;
+        if (elementName.includes('振替') || elementName.includes('内訳')) return 320;
+        
+        // デフォルト：ハッシュベース配置
+        const groupIndex = this.simpleHash(elementName) % 12;
+        return 120 + (groupIndex * 20);
     }
 
     simpleHash(str) {

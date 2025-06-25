@@ -1,161 +1,194 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは、このリポジトリでのコード作業時にClaude Code (claude.ai/code) に対するガイダンスを提供します。
 
-## Project Overview
+## プロジェクト概要
 
-This is a Figma to eDocument converter that transforms Figma Raw plugin JSON exports into Salesforce eDocument-compatible JSON format. The project exists in two forms:
+Figma RawプラグインのJSONエクスポートをSalesforce eDocument互換のJSON形式に変換するツールです。プロジェクトは2つの形式で存在します：
 
-1. **Node.js CLI tool** (`figma-to-edocument-converter.js`) - Command-line conversion utility
-2. **Browser-based GUI** (`index.html`, `app.js`, `converter-browser.js`, `styles.css`) - Web interface with preview and advanced features
+1. **Node.js CLIツール** (`figma-to-edocument-converter.js`) - コマンドライン変換ユーティリティ
+2. **ブラウザベースGUI** (`index.html`, `app.js`, `converter-browser.js`, `styles.css`) - プレビューと高度な機能を備えたWebインターフェース
 
-## Core Architecture
+## 開発ルール（一般公開対応）
 
-### Conversion Engine (`FigmaToEDocumentConverter` class)
-The main conversion logic exists in two variants:
-- **Node.js version**: Basic conversion with A4 fixed output
-- **Browser version**: Enhanced with paper size selection, scaling, collision detection, and preview
+### セキュリティとプライバシー
+- **機密情報の除外**: .gitignoreで個人情報や機密情報を含む可能性のあるファイルを除外
+- **サンプルファイルの保護**: 実際の契約書や請求書等のサンプルファイルは一般公開しない
+- **ハードコーディングの回避**: 特定の顧客名、会社名、個人情報を含むハードコーディングを避ける
+- **汎用的な実装**: 特定の業務に依存しない汎用的な変換機能として実装
 
-**Key conversion process:**
-1. **Automatic Detection**: Check for `textContent` array in Figma JSON
-2. **Path-based Conversion**: If `textContent` exists, use path-based element mapping for higher accuracy
-3. **Fallback Conversion**: Use hierarchical layout calculation if no `textContent` available
-4. Parse Figma JSON hierarchy (frames, groups, text, shapes)
-5. Calculate coordinates using path analysis or relative layout positions  
-6. Convert pixel coordinates to millimeter-based eDocument format
-7. Transform text styling (fonts, colors, alignment)
-8. Handle image/shape elements as placeholders or image types
+### ファイル構成の原則
+- **公開ファイル**: 汎用的な変換ロジック、UI、ドキュメント
+- **非公開ファイル**: 実際のサンプルデータ、個人情報を含むテストファイル
+- **設定可能**: ユーザーが独自のサンプルファイルを使用できる設計
 
-### Coordinate System Transformation
-- **Input**: Figma pixels (0,0 top-left, nested layout hierarchy)
-- **Output**: eDocument millimeters (A4 paper dimensions)
-- **Conversion**: 1px = 0.264583mm (96DPI standard)
-- **Challenge**: Figma exports lack absolute coordinates, requiring hierarchical layout calculation
+## コア技術仕様
 
-### Browser GUI Features
-- Drag & drop file upload with validation
-- Paper size selection (A4, A3, B4, B5, Letter, Legal)
-- Scale factor adjustment (0.1x to 3.0x)
-- Visual preview of converted layout
-- Element mapping table showing Figma→eDocument coordinate translation
-- Collision detection to prevent element overlap
-- A4-optimized sizing constraints
+### 変換エンジン (`FigmaToEDocumentConverter` クラス)
+メインの変換ロジックは2つのバリエーションで存在：
+- **Node.js版**: A4固定出力の基本変換
+- **ブラウザ版**: 用紙サイズ選択、縦横向き対応、スケーリング、衝突検出、プレビュー機能強化
 
-## Common Commands
+**主要な変換プロセス:**
+1. **自動検出**: Figma JSONの`textContent`配列の存在確認
+2. **パスベース変換**: `textContent`が存在する場合、パスベース要素マッピングで高精度変換
+3. **フォールバック変換**: `textContent`がない場合は階層レイアウト計算を使用
+4. Figma JSON階層の解析（フレーム、グループ、テキスト、図形）
+5. パス解析または相対レイアウト位置を使用した座標計算
+6. ピクセル座標からミリメートルベースのeDocument形式への変換
+7. テキストスタイル変換（フォント、色、アライメント）
+8. 画像/図形要素をプレースホルダーまたは画像タイプとして処理
 
-### CLI Conversion
+### 用紙サイズと向き対応
+- **対応サイズ**: A4, A3, B4, B5, Letter, Legal
+- **向き選択**: 縦向き（Portrait）と横向き（Landscape）
+- **動的サイズ表示**: 選択に応じた用紙サイズの表示更新
+- **座標システム対応**: 向きに応じた座標変換の自動調整
+
+### 座標システム変換
+- **入力**: Figmaピクセル（左上0,0、ネストレイアウト階層）
+- **出力**: eDocumentミリメートル（用紙サイズ対応）
+- **変換**: 1px = 0.264583mm（96DPI標準）
+- **課題**: Figmaエクスポートは絶対座標を持たないため、階層レイアウト計算が必要
+
+### ブラウザGUI機能
+- ドラッグ&ドロップファイルアップロード（検証付き）
+- 用紙サイズ選択（A4, A3, B4, B5, Letter, Legal）
+- 用紙向き選択（縦向き/横向き）
+- スケール調整（0.1x～3.0x）
+- 変換レイアウトの視覚プレビュー
+- Figma→eDocument座標変換を表示する要素マッピングテーブル
+- 要素重複を防ぐ衝突検出
+- 用紙サイズ最適化されたサイズ制約
+
+## 一般的なコマンド
+
+### CLI変換
 ```bash
-# Basic conversion
+# 基本変換
 node figma-to-edocument-converter.js "input.json" "output.json"
 
-# Using npm script
+# npmスクリプト使用
 npm run convert -- "input.json" "output.json"
 ```
 
-### Testing
+### テスト
 ```bash
-# Run test suite
+# テストスイート実行
 npm test
 
-# Test with sample files
+# サンプルファイルでテスト
 node test-converter.js
 ```
 
-### Browser Development
+### ブラウザ開発
 ```bash
-# Open in browser (file:// protocol)
+# ブラウザで開く（file://プロトコル）
 open index.html
 
-# Or serve locally
+# ローカルサーバーで配信
 python3 -m http.server 8000
-# Then open http://localhost:8000
+# その後 http://localhost:8000 を開く
 ```
 
-## Critical Implementation Details
+## 重要な実装詳細
 
-### Layout Calculation Strategy
-The converter handles Figma's hierarchical layout system by:
-1. Analyzing frame names to infer layout types (`header`, `groups`, `text`, `content`)
-2. Calculating child element positions based on parent layout modes (`HORIZONTAL`/`VERTICAL`)
-3. Using spacing heuristics (10px horizontal, 5px vertical gaps)
-4. Applying intelligent collision detection for optimal placement
+### レイアウト計算戦略
+変換器はFigmaの階層レイアウトシステムを以下の方法で処理：
+1. フレーム名の解析によるレイアウトタイプの推論（`header`, `groups`, `text`, `content`）
+2. 親レイアウトモード（`HORIZONTAL`/`VERTICAL`）に基づく子要素位置計算
+3. スペーシングヒューリスティックの使用（水平10px、垂直5px間隔）
+4. 最適配置のためのインテリジェント衝突検出適用
 
-### Element Size Constraints (Browser Version)
-- Maximum width: 80% of paper width minus margins
-- Maximum height: 60% of paper height minus margins  
-- Minimum readable size: 8mm
-- Text height minimum: 15mm for readability
+### 要素サイズ制約（ブラウザ版）
+- 最大幅: 用紙幅の80%（マージン除く）
+- 最大高さ: 用紙高さの60%（マージン除く）
+- 最小読み取り可能サイズ: 8mm
+- テキスト高さ最小: 読み取り可能性のため15mm
 
-### Collision Detection Algorithm
-50-attempt positioning system:
-- Attempts 1-25: Move right/down with wrapping
-- Attempts 26-50: Grid-based positioning (20mm grid)
-- Fallback: Constrained positioning within paper bounds
+### 衝突検出アルゴリズム
+50回試行の配置システム：
+- 試行1-25: 右/下移動（ラッピング付き）
+- 試行26-50: グリッドベース配置（20mmグリッド）
+- フォールバック: 用紙境界内での制約配置
 
-## Data Formats
+## データ形式
 
-### Figma Input Structure
-Exported via Figma Raw plugin with hierarchical node structure:
-- `type`: NODE_TYPE (TEXT, RECTANGLE, FRAME, etc.)
-- `width`, `height`: Element dimensions in pixels
-- `children[]`: Nested elements array
-- `characters`: Text content (for TEXT nodes)
-- `fills[]`, `strokes[]`: Styling information
+### Figma入力構造
+Figma Rawプラグインでエクスポートされた階層ノード構造：
+- `type`: NODE_TYPE（TEXT, RECTANGLE, FRAME等）
+- `width`, `height`: ピクセル単位の要素寸法
+- `children[]`: ネストされた要素配列
+- `characters`: テキストコンテンツ（TEXTノード用）
+- `fills[]`, `strokes[]`: スタイル情報
 
-### Path-based Conversion System
+### パスベース変換システム
 
-The converter automatically detects and uses Figma Raw plugin's `textContent` array for enhanced accuracy:
-- **textContent Detection**: Automatically switches to path-based conversion when `textContent` array is present
-- **Path Mapping**: Uses hierarchical path strings to precisely locate and match text elements
-- **Coordinate Calculation**: Employs path-based position estimation using segment analysis
-- **Fallback Support**: Seamlessly falls back to traditional hierarchical parsing when `textContent` is unavailable
+変換器は精度向上のためFigma Rawプラグインの`textContent`配列を自動検出・使用：
+- **textContent検出**: `textContent`配列存在時に自動的にパスベース変換に切り替え
+- **パスマッピング**: 階層パス文字列を使用したテキスト要素の正確な位置特定とマッチング
+- **座標計算**: セグメント解析を使用したパスベース位置推定
+- **フォールバックサポート**: `textContent`利用不可時は従来の階層解析に無縫切り替え
 
-### Smart Element Filtering
+### スマート要素フィルタリング
 
-The converter automatically excludes meaningless elements:
-- **Skipped Image Elements**: `type: "RECTANGLE"` with `name: "Image"` containing `imageHash` are excluded as they cannot be imported into eDocument
-- **Small Decorative Images**: Images smaller than 20x20px are considered decorative and excluded
-- **Debug Tracking**: All skipped elements are logged in debug info with reasons and statistics displayed in the mapping table
+変換器は意味のない要素を自動除外：
+- **スキップされる画像要素**: `imageHash`を含む`type: "RECTANGLE"`で`name: "Image"`の要素はeDocumentインポート不可のため除外
+- **小さな装飾画像**: 20x20px未満の画像は装飾とみなし除外
+- **デバッグ追跡**: すべてのスキップ要素は理由付きでデバッグ情報にログ記録、マッピングテーブルに統計表示
 
-### eDocument Output Structure
-Salesforce-compatible JSON with:
-- `panels[].printElements[]`: Array of positioned elements
-- Element positioning in millimeters with `left`, `top`, `width`, `height`
-- `printElementType.type`: "text", "image", or "table"
-- Font sizing in points, colors in hex format
+### eDocument出力構造
+Salesforce互換JSON：
+- `panels[].printElements[]`: 配置された要素の配列
+- ミリメートル単位での要素配置（`left`, `top`, `width`, `height`）
+- `printElementType.type`: "text", "image", "table"
+- ポイント単位のフォントサイズ、16進形式の色
 
-## Known Limitations
+## 既知の制限
 
-### Requires Manual Adjustment
-- Data binding to Salesforce objects
-- Dynamic table row counts
-- Conditional visibility logic
-- Mathematical formulas
-- Image URLs (security restriction)
-- Complex vector paths
-- Animation effects
+### 手動調整が必要
+- Salesforceオブジェクトへのデータバインディング
+- 動的テーブル行数
+- 条件付き表示ロジック
+- 数式
+- 画像URL（セキュリティ制限）
+- 複雑なベクターパス
+- アニメーション効果
 
-### Current Conversion Gaps
-- Figma Auto Layout → eDocument positioning (approximated via heuristics)
-- Complex nested transformations
-- Advanced text styling (gradients, shadows)
-- Non-standard fonts availability in Salesforce
+### 現在の変換ギャップ
+- Figma Auto Layout → eDocument配置（ヒューリスティック近似）
+- 複雑なネスト変換
+- 高度なテキストスタイル（グラデーション、影）
+- Salesforceでの非標準フォント利用可能性
 
-## Workflow Integration
+## ワークフロー統合
 
-The typical usage flow:
-1. Design in Figma with meaningful element names
-2. Export via Figma Raw plugin
-3. Convert using browser GUI or CLI tool
-4. Preview and validate layout
-5. Download eDocument JSON
-6. Import into Salesforce eDocument
-7. Manually configure data bindings and dynamic elements
+典型的な使用フロー：
+1. 意味のある要素名でFigmaデザイン
+2. Figma Rawプラグインでエクスポート
+3. ブラウザGUIまたはCLIツールで変換
+4. レイアウトのプレビューと検証
+5. eDocument JSONダウンロード
+6. Salesforce eDocumentにインポート
+7. データバインディングと動的要素を手動設定
 
-## Files to Focus On
+## 注目すべきファイル
 
-- `converter-browser.js`: Core conversion logic with all latest improvements
-- `app.js`: Browser UI event handling and file management  
-- `index.html`: Complete GUI interface
-- `Figjson_conversion_workflow.md`: Detailed workflow documentation
-- `Test_preprod_precontract.json`: Reference eDocument format example
+- `converter-browser.js`: 最新改良を含むコア変換ロジック
+- `app.js`: ブラウザUIイベント処理とファイル管理
+- `index.html`: 完全なGUIインターフェース
+- `Figjson_conversion_workflow.md`: 詳細ワークフロードキュメント
+- `.gitignore`: セキュリティとプライバシー保護設定
+
+## セキュリティ注意事項
+
+### 一般公開リポジトリでの注意点
+- 実際の顧客データや機密情報を含むファイルをコミットしない
+- サンプルファイルは汎用的なダミーデータのみ使用
+- 特定の企業名や個人情報のハードコーディングを避ける
+- .gitignoreを適切に設定して機密ファイルを除外
+
+### 推奨されるテストデータ
+- 汎用的なサンプルテキスト（"サンプル会社", "テスト太郎"等）
+- 実在しない住所や電話番号
+- ダミーの請求書や契約書テンプレート
